@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom as Dom
 import Browser.Events
 import Color
 import Css
@@ -8,40 +9,64 @@ import Css.Global
 import Html
 import Html.Events
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css, style)
+import Html.Styled.Attributes exposing (css, id, style)
 import Html.Styled.Events exposing (onClick)
 import List.Extra as List
 import Tailwind.Utilities as Tw
+import Task
 
 
 type alias Model =
-    { count : Int
-    , width : Float
+    { width : Float
+    , height : Float
+    , stageWidth : Float
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { count = 0
-      , width = 500
+    ( { height = 0
+      , width = 0
+      , stageWidth = 0
       }
-    , Cmd.none
+    , Task.attempt GotViewport Dom.getViewport
     )
 
 
 type Msg
-    = Increment
-    | Decrement
+    = GotResize Int Int
+    | GotViewport (Result Dom.Error Dom.Viewport)
+    | GotStageSize (Result Dom.Error Dom.Viewport)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Increment ->
-            ( { model | count = model.count + 1 }, Cmd.none )
+        GotResize w h ->
+            ( { model | width = toFloat w, height = toFloat h }
+            , Task.attempt GotStageSize (Dom.getViewportOf "stage")
+            )
 
-        Decrement ->
-            ( { model | count = model.count - 1 }, Cmd.none )
+        GotViewport result ->
+            case result of
+                Ok { viewport } ->
+                    ( { model
+                        | width = viewport.width
+                        , height = viewport.height
+                      }
+                    , Task.attempt GotStageSize (Dom.getViewportOf "stage")
+                    )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
+        GotStageSize result ->
+            case result of
+                Ok { viewport } ->
+                    ( { model | stageWidth = viewport.width }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
 
 tailwindViewWrapper : Model -> Html.Html Msg
@@ -67,14 +92,16 @@ view model =
         [ div
             [ style "width" "50%"
             , style "position" "relative"
+            , id "stage"
             ]
-            [ ractive model ]
+            [ stage model ]
         , div
             [ style "width" "50%"
             , style "height" "90vh"
             , css
                 [ Tw.prose
                 , Tw.overflow_scroll
+                , Tw.p_8
                 ]
             ]
             [ p [] [ text "And they sit at the bar" ]
@@ -119,7 +146,7 @@ main =
         { init = always init
         , view = tailwindViewWrapper
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = \model -> Browser.Events.onResize GotResize
         }
 
 
@@ -127,28 +154,40 @@ main =
 {- Ractive -}
 
 
-ractive model =
+stage model =
+    div
+        [ css [ Tw.ml_auto, Tw.mr_auto, Tw.absolute, Tw.flex ]
+        , style "top" "50%"
+        , style "transform" "translateY(-50%)"
+        ]
+        (drawDonations model.stageWidth [ 1, 1, 1, 5 ])
+
+
+drawDonations width donations =
     let
+        donationTotal =
+            donations
+                |> List.map sqrt
+                |> List.sum
+
+        sideSize amount =
+            (sqrt amount / donationTotal * width)
+                |> String.fromFloat
+                |> (\x -> x ++ "px")
+
         drawDonation i amount =
             div
-                [ style "width" "50px"
-                , style "height" "50px"
+                [ style "width" (sideSize amount)
+                , style "height" (sideSize amount)
                 , List.getAt i colors
                     |> Maybe.withDefault Tw.bg_blue_200
                     |> List.singleton
                     |> css
+                , css [ Tw.flex, Tw.justify_center, Tw.items_center ]
                 ]
-                []
-
-        donations =
-            List.indexedMap drawDonation [ 1, 1, 1, 5 ]
+                [ text (String.fromFloat amount) ]
     in
-    div
-        [ css [ Tw.ml_auto, Tw.mr_auto, Tw.absolute ]
-        , style "top" "50%"
-        , style "transform" "translateY(-50%)"
-        ]
-        donations
+    List.indexedMap drawDonation donations
 
 
 colors =
