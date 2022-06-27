@@ -128,11 +128,13 @@ main =
 
 stage model =
     div
-        [ css [ Tw.ml_auto, Tw.mr_auto, Tw.absolute, Tw.flex ]
+        [ css [ Tw.ml_auto, Tw.mr_auto, Tw.absolute ]
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        (drawDonations model.stageWidth [ 1, 1, 1, 5 ])
+        [ div [ css [ Tw.flex ] ] (drawDonations model.stageWidth [ 1, 1, 1, 5 ])
+        , jar 50
+        ]
 
 
 drawDonations width donations =
@@ -157,7 +159,7 @@ drawDonations width donations =
                     |> css
                 , css [ Tw.flex, Tw.justify_center, Tw.items_center ]
                 ]
-                [ text (String.fromFloat amount) ]
+                [ text ("$" ++ String.fromFloat amount) ]
     in
     List.indexedMap drawDonation donations
 
@@ -170,6 +172,18 @@ colors =
     , Tw.bg_blue_400
     , Tw.bg_blue_500
     ]
+
+
+jar amount =
+    div [ css [ Tw.flex, Tw.flex_col, Tw.items_center ] ]
+        [ img
+            [ Html.Styled.Attributes.src "jar.png"
+            , style "height" "100px"
+            , style "width" "100px"
+            ]
+            []
+        , text (String.fromInt amount)
+        ]
 
 
 

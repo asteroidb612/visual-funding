@@ -16,6 +16,7 @@
             "ianmackenzie/elm-geometry": "3.9.1",
             "ianmackenzie/elm-units": "2.9.0",
             "matheus23/elm-default-tailwind-modules": "2.0.3",
+            "mdgriffith/elm-animator": "1.1.1",
             "rtfeldman/elm-css": "17.1.1"
         },
         "indirect": {
