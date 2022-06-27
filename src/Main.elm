@@ -1,23 +1,37 @@
 module Main exposing (main)
 
+import Angle exposing (Angle)
+import Axis3d
 import Browser
+import Browser.Events
+import Camera3d
+import Color
 import Css
 import Css.Global
+import Direction3d
+import Duration exposing (Duration)
 import Html
 import Html.Events
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, style)
 import Html.Styled.Events exposing (onClick)
+import Length
+import Pixels
+import Point3d
+import Quantity
+import Scene3d
+import Scene3d.Material as Material
 import Tailwind.Utilities as Tw
+import Viewpoint3d
 
 
 type alias Model =
     { count : Int }
 
 
-initialModel : Model
+initialModel : ( Model, Cmd Msg )
 initialModel =
-    { count = 0 }
+    ( { count = 0 }, Cmd.none )
 
 
 type Msg
@@ -25,14 +39,14 @@ type Msg
     | Decrement
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Increment ->
-            { model | count = model.count + 1 }
+            ( { model | count = model.count + 1 }, Cmd.none )
 
         Decrement ->
-            { model | count = model.count - 1 }
+            ( { model | count = model.count - 1 }, Cmd.none )
 
 
 tailwindViewWrapper : Model -> Html.Html Msg
@@ -55,7 +69,7 @@ view model =
             , Tw.p_8
             ]
         ]
-        [ div [ style "width" "50%" ] [ text "The other half" ]
+        [ div [ style "width" "50%" ] [ visualization model ]
         , div [ style "width" "50%", css [ Tw.prose, Tw.overflow_scroll ] ]
             [ p [] [ text "And they sit at the bar" ]
             , p [] [ text "And put bread in my jar" ]
@@ -95,8 +109,35 @@ Later years[edit]
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = initialModel
+    Browser.element
+        { init = always initialModel
         , view = tailwindViewWrapper
         , update = update
+        , subscriptions = always Sub.none
         }
+
+
+
+{- Visualization -}
+
+
+visualization model =
+    let
+        camera =
+            Camera3d.orthographic
+                { viewpoint =
+                    Viewpoint3d.isometric
+                        { focalPoint = Point3d.origin
+                        , distance = Length.cssPixels 100
+                        }
+                , viewportHeight = Length.cssPixels 32
+                }
+    in
+    Html.Styled.fromUnstyled <|
+        Scene3d.unlit
+            { camera = camera
+            , dimensions = ( Pixels.int 32, Pixels.int 32 )
+            , entities = []
+            , clipDepth = Length.cssPixels 10
+            , background = Scene3d.transparentBackground
+            }
