@@ -1,0 +1,17 @@
+ports:
+  - port: 8000
+    onOpen: notify
+
+tasks:
+  - name: elm-live
+    init: |
+      mkdir /workspace/.bin
+      npm install
+      gp sync-done npminstall
+    command: |
+      export PATH="/workspace/.bin:$PATH"
+      echo "Start server with: elm-live"
+    
+vscode:
+  extensions:
+    - "elmtooling.elm-ls-vscode"
