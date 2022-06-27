@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "elm reactor",
+    "start": "elm-live src/Main.elm",
+    "serve": "elm-live src/Main.elm --open -- --output=main.js",
     "test": "elm-test"
   },
   "devDependencies": {
