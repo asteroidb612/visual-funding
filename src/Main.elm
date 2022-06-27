@@ -1,37 +1,32 @@
 module Main exposing (main)
 
-import Angle exposing (Angle)
-import Axis3d
 import Browser
 import Browser.Events
-import Camera3d
 import Color
 import Css
 import Css.Global
-import Direction3d
-import Duration exposing (Duration)
 import Html
 import Html.Events
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, style)
 import Html.Styled.Events exposing (onClick)
-import Length
-import Pixels
-import Point3d
-import Quantity
-import Scene3d
-import Scene3d.Material as Material
+import List.Extra as List
 import Tailwind.Utilities as Tw
-import Viewpoint3d
 
 
 type alias Model =
-    { count : Int }
+    { count : Int
+    , width : Float
+    }
 
 
-initialModel : ( Model, Cmd Msg )
-initialModel =
-    ( { count = 0 }, Cmd.none )
+init : ( Model, Cmd Msg )
+init =
+    ( { count = 0
+      , width = 500
+      }
+    , Cmd.none
+    )
 
 
 type Msg
@@ -69,8 +64,19 @@ view model =
             , Tw.p_8
             ]
         ]
-        [ div [ style "width" "50%" ] [ visualization model ]
-        , div [ style "width" "50%", css [ Tw.prose, Tw.overflow_scroll ] ]
+        [ div
+            [ style "width" "50%"
+            , style "position" "relative"
+            ]
+            [ ractive model ]
+        , div
+            [ style "width" "50%"
+            , style "height" "90vh"
+            , css
+                [ Tw.prose
+                , Tw.overflow_scroll
+                ]
+            ]
             [ p [] [ text "And they sit at the bar" ]
             , p [] [ text "And put bread in my jar" ]
             , p [] [ text "And say Man, what are you doing here?" ]
@@ -110,7 +116,7 @@ Later years[edit]
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always initialModel
+        { init = always init
         , view = tailwindViewWrapper
         , update = update
         , subscriptions = always Sub.none
@@ -118,26 +124,38 @@ main =
 
 
 
-{- Visualization -}
+{- Ractive -}
 
 
-visualization model =
+ractive model =
     let
-        camera =
-            Camera3d.orthographic
-                { viewpoint =
-                    Viewpoint3d.isometric
-                        { focalPoint = Point3d.origin
-                        , distance = Length.cssPixels 100
-                        }
-                , viewportHeight = Length.cssPixels 32
-                }
+        drawDonation i amount =
+            div
+                [ style "width" "50px"
+                , style "height" "50px"
+                , List.getAt i colors
+                    |> Maybe.withDefault Tw.bg_blue_200
+                    |> List.singleton
+                    |> css
+                ]
+                []
+
+        donations =
+            List.indexedMap drawDonation [ 1, 1, 1, 5 ]
     in
-    Html.Styled.fromUnstyled <|
-        Scene3d.unlit
-            { camera = camera
-            , dimensions = ( Pixels.int 32, Pixels.int 32 )
-            , entities = []
-            , clipDepth = Length.cssPixels 10
-            , background = Scene3d.transparentBackground
-            }
+    div
+        [ css [ Tw.ml_auto, Tw.mr_auto, Tw.absolute ]
+        , style "top" "50%"
+        , style "transform" "translateY(-50%)"
+        ]
+        donations
+
+
+colors =
+    [ Tw.bg_blue_50
+    , Tw.bg_blue_100
+    , Tw.bg_blue_200
+    , Tw.bg_blue_300
+    , Tw.bg_blue_400
+    , Tw.bg_blue_500
+    ]
