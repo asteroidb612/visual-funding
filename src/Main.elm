@@ -134,7 +134,7 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ drawDonations model.stageWidth ]
+        [ drawDonations model.stageWidth exampleDonors ]
 
 
 type alias Donor =
@@ -144,7 +144,7 @@ type alias Donor =
     }
 
 
-donors =
+exampleDonors =
     [ { name = "Steve"
       , donationsByCause =
             Dict.fromList
@@ -177,8 +177,7 @@ donors =
     ]
 
 
-drawDonations : Float -> Html Msg
-drawDonations width =
+drawDonations width donors =
     let
         allCauses =
             donors
@@ -321,8 +320,34 @@ writing =
         , p [] [ text "A way to mix the matching funds with funding markets is to have the matching funds given to a whole market of projects in proportion to how they are funded. This is a thing in the UK." ]
         , spacer
         , h3 [] [ text "Quadratic Funding" ]
-        , p [] [ text "Here you're matching donations by their square root proportions. That means 5 people giving one dollar get more matching than one person giving 5 dollars. However, this is vulnerable to people making multiple accounts and pretending to be 5 people!" ]
+        , p [] [ text "Here you're matching donations by their square root proportions. That means four people giving one dollar each to project A get more matching funds than one person giving four dollars to project B. " ]
+        , drawDonations 300 hamiltonDonors
+        , p [] [ text "However, this is vulnerable to people making multiple accounts and pretending to be 4 people!" ]
         , spacer
         , h3 [] [ text "Passported Quadratic Funding" ]
         , p [] [ text "Using the Gitcion Passport, we can scale the impact someone's donation has based on how sure we are they are not part of a sybil attack. Typically, a sybil attack looks like hacker1@gmail.com, hacker2@gmail.com etc... Here, by linking accounts to Twitter, BrightId, ProofOfHumanity, etc we can reward people for keeping the system honest with extra say in where funds go." ]
         ]
+
+
+hamiltonDonors =
+    [ { name = "d6"
+      , donationsByCause = Dict.fromList [ ( "Opera", 4 ) ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    , { name = "d5"
+      , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    , { name = "d4"
+      , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    , { name = "d3"
+      , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    , { name = "d1"
+      , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    ]
