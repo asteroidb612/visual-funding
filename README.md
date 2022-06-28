@@ -1,4 +1,4 @@
-# Visual Funding Guide
+# Visual / Narrative Funding Guide
 This guide was written to explain the calculation of personhood and plurality scores, as well as to show their impact on quadratic funding in Gitcoin Grants.
 
 To make these topics accessible, they are articulated visually. 
