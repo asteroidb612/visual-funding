@@ -6,12 +6,14 @@ import Browser.Events
 import Color
 import Css
 import Css.Global
+import Dict exposing (Dict)
 import Html
 import Html.Events
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css, id, style)
+import Html.Styled.Attributes exposing (class, css, id, style)
 import Html.Styled.Events exposing (onClick)
 import List.Extra as List
+import Set
 import Tailwind.Utilities as Tw
 import Task
 
@@ -90,13 +92,13 @@ view model =
             ]
         ]
         [ div
-            [ style "width" "50%"
+            [ style "width" "99%"
             , style "position" "relative"
             , id "stage"
             ]
             [ stage model ]
         , div
-            [ style "width" "50%"
+            [ style "width" "1%"
             , style "height" "90vh"
             , css
                 [ Tw.prose
@@ -132,12 +134,93 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ div [ css [ Tw.flex ] ] (drawDonations model.stageWidth [ 1, 1, 1, 5 ])
+        [ div [ css [ Tw.flex ] ] (drawCause model.stageWidth [ 1, 1, 1, 5 ])
         , jar 50
+        , drawDonations model.stageWidth
         ]
 
 
-drawDonations width donations =
+type alias Donor =
+    { name : String
+    , donationsByCause : Dict String Int
+    , bonusByPassportSource : Dict String Float
+    }
+
+
+donors =
+    [ { name = "Steve"
+      , donationsByCause =
+            Dict.fromList
+                [ ( "pianoPlayer", 5 )
+                , ( "piano podcast", 1 )
+                , ( "MuseScore Open Source Project", 10 )
+                ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    , { name = "Rachael"
+      , donationsByCause =
+            Dict.fromList
+                [ ( "pianoPlayer", 5 )
+                , ( "piano podcast", 1 )
+                , ( "MuseScore Open Source Project", 1 )
+                ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    , { name = "Sarah"
+      , donationsByCause =
+            Dict.fromList
+                [ ( "pianoPlayer", 5 )
+                , ( "piano podcast", 4 )
+                , ( "Solar Coffee Research", 10 )
+                ]
+      , bonusByPassportSource = Dict.fromList []
+      }
+    ]
+
+
+drawDonations : Float -> Html Msg
+drawDonations width =
+    let
+        allCauses =
+            donors
+                |> List.map .donationsByCause
+                |> List.concatMap Dict.keys
+                |> Set.fromList
+                |> Set.toList
+
+        widthOfCause causeName =
+            donors
+                |> List.filterMap
+                    (\donor ->
+                        Dict.get causeName donor.donationsByCause
+                    )
+                |> List.map sqrt
+                |> List.sum
+
+        donations causeName =
+            donors
+                |> List.filterMap
+                    (\donor ->
+                        Dict.get causeName donor.donationsByCause
+                    )
+
+        totalWidth =
+            List.map widthOfCause allCauses
+                |> List.sum
+    in
+    allCauses
+        |> List.map
+            (\cause ->
+                div [ class "cause", css [ Tw.flex ] ]
+                    (drawCause
+                        (widthOfCause cause / totalWidth * width)
+                        (donations cause)
+                    )
+            )
+        |> div [ css [ Tw.flex ], class "allCauses" ]
+
+
+drawCause width donations =
     let
         donationTotal =
             donations
@@ -153,11 +236,12 @@ drawDonations width donations =
             div
                 [ style "width" (sideSize amount)
                 , style "height" (sideSize amount)
+                , class "donation"
                 , List.getAt i colors
                     |> Maybe.withDefault Tw.bg_blue_200
                     |> List.singleton
                     |> css
-                , css [ Tw.flex, Tw.justify_center, Tw.items_center ]
+                , css [ Tw.flex, Tw.justify_center, Tw.items_center, Tw.flex_nowrap ]
                 ]
                 [ text ("$" ++ String.fromFloat amount) ]
     in
