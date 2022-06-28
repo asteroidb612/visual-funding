@@ -134,7 +134,9 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ drawRound model.stageWidth exampleDonors 100 ]
+        [ drawRound model.stageWidth exampleDonors 100
+        , drawDonors exampleDonors
+        ]
 
 
 type alias Donor =
@@ -145,7 +147,7 @@ type alias Donor =
 
 
 exampleDonors =
-    [ { name = "Steve"
+    [ { name = "Khadija"
       , donationsByCause =
             Dict.fromList
                 [ ( "Piano player", 5 )
@@ -179,7 +181,7 @@ exampleDonors =
 
 type alias Donation =
     { bonusRatio : Float
-    , color : Css.Style
+    , color : String
     , amount : Float
     }
 
@@ -265,14 +267,14 @@ drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
                     , Tw.justify_center
                     , Tw.items_center
                     , Tw.flex_nowrap
-                    , donation.color
                     ]
+                , style "background-color" donation.color
                 ]
                 [ text ("$" ++ String.fromFloat donation.amount) ]
 
         matchBox =
             div
-                [ css [ Tw.bg_green_100, Tw.border_l, Tw.border_r, Tw.border_black, Tw.flex, Tw.justify_center ]
+                [ css [ Tw.bg_green_200, Tw.border_l, Tw.border_r, Tw.border_black, Tw.flex, Tw.justify_center ]
                 , style "height" (String.fromFloat matchHeight ++ "px")
                 ]
                 [ text ("Match: $" ++ String.fromInt (round causeMatch)) ]
@@ -288,7 +290,15 @@ drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
                 [ text name ]
 
         totalBox =
-            div [ css [ Tw.flex, Tw.items_center, Tw.justify_center ] ]
+            div
+                [ css
+                    [ Tw.flex
+                    , Tw.items_center
+                    , Tw.justify_center
+                    , Tw.font_bold
+                    , Tw.pb_2
+                    ]
+                ]
                 [ text ("Total: $" ++ String.fromInt totalFunding) ]
 
         fmtWidthSize donation =
@@ -337,12 +347,19 @@ drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
 
 
 colors =
-    [ Tw.bg_blue_50
-    , Tw.bg_blue_100
-    , Tw.bg_blue_200
-    , Tw.bg_blue_300
-    , Tw.bg_blue_400
-    , Tw.bg_blue_500
+    -- Thanks,  http://vrl.cs.brown.edu/color !
+    [ "rgb(197,213,240)"
+    , "rgb(65,201,220)"
+    , "rgb(208,168,249)"
+    , "rgb(254,183,134)"
+    , "rgb(148,166,253)"
+    , "rgb(250,65,199)"
+    , "rgb(226,209,203)"
+    , "rgb(253,89,37)"
+    , "rgb(251,159,168)"
+    , "rgb(250,85,122)"
+    , "rgb(228,135,57)"
+    , "rgb(154,142,145)"
     ]
 
 
@@ -355,6 +372,41 @@ jar amount =
             ]
             []
         , text (String.fromInt amount)
+        ]
+
+
+drawDonors donors =
+    let
+        drawDonor i donor =
+            List.getAt i colors
+                |> Maybe.map
+                    (\color ->
+                        div
+                            [ css
+                                [ Tw.flex
+                                , Tw.justify_center
+                                , Tw.items_center
+                                , Tw.p_4
+                                ]
+                            ]
+                            [ div
+                                [ css
+                                    [ Tw.w_4
+                                    , Tw.h_4
+                                    , Tw.mr_2
+                                    ]
+                                , style "background-color" color
+                                ]
+                                []
+                            , text donor.name
+                            ]
+                    )
+                |> Maybe.withDefault (text "")
+    in
+    div [ css [ Tw.prose ] ]
+        [ h2 [] [ text "Donors" ]
+        , div [ css [ Tw.flex ] ]
+            (List.indexedMap drawDonor donors)
         ]
 
 
