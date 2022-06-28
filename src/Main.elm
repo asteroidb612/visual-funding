@@ -92,13 +92,13 @@ view model =
             ]
         ]
         [ div
-            [ style "width" "99%"
+            [ style "width" "50%"
             , style "position" "relative"
             , id "stage"
             ]
             [ stage model ]
         , div
-            [ style "width" "1%"
+            [ style "width" "50%"
             , style "height" "90vh"
             , css
                 [ Tw.prose
@@ -134,10 +134,7 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ div [ css [ Tw.flex ] ] (drawCause model.stageWidth [ 1, 1, 1, 5 ])
-        , jar 50
-        , drawDonations model.stageWidth
-        ]
+        [ drawDonations model.stageWidth ]
 
 
 type alias Donor =
@@ -151,26 +148,28 @@ donors =
     [ { name = "Steve"
       , donationsByCause =
             Dict.fromList
-                [ ( "pianoPlayer", 5 )
-                , ( "piano podcast", 1 )
+                [ ( "Piano player", 5 )
+                , ( "Piano podcast", 1 )
                 , ( "MuseScore Open Source Project", 10 )
+                , ( "Solar Coffee Research", 100 )
                 ]
       , bonusByPassportSource = Dict.fromList []
       }
     , { name = "Rachael"
       , donationsByCause =
             Dict.fromList
-                [ ( "pianoPlayer", 5 )
-                , ( "piano podcast", 1 )
+                [ ( "Piano player", 5 )
+                , ( "Piano podcast", 1 )
                 , ( "MuseScore Open Source Project", 1 )
+                , ( "Solar Coffee Research", 10 )
                 ]
       , bonusByPassportSource = Dict.fromList []
       }
     , { name = "Sarah"
       , donationsByCause =
             Dict.fromList
-                [ ( "pianoPlayer", 5 )
-                , ( "piano podcast", 4 )
+                [ ( "Piano player", 5 )
+                , ( "Piano podcast", 4 )
                 , ( "Solar Coffee Research", 10 )
                 ]
       , bonusByPassportSource = Dict.fromList []
@@ -211,16 +210,15 @@ drawDonations width =
     allCauses
         |> List.map
             (\cause ->
-                div [ class "cause", css [ Tw.flex ] ]
-                    (drawCause
-                        (widthOfCause cause / totalWidth * width)
-                        (donations cause)
-                    )
+                drawCause
+                    cause
+                    (widthOfCause cause / totalWidth * width)
+                    (donations cause)
             )
         |> div [ css [ Tw.flex ], class "allCauses" ]
 
 
-drawCause width donations =
+drawCause name width donations =
     let
         donationTotal =
             donations
@@ -228,14 +226,17 @@ drawCause width donations =
                 |> List.sum
 
         sideSize amount =
-            (sqrt amount / donationTotal * width)
+            sqrt amount / donationTotal * width
+
+        fmtSideSize amount =
+            sideSize amount
                 |> String.fromFloat
                 |> (\x -> x ++ "px")
 
         drawDonation i amount =
             div
-                [ style "width" (sideSize amount)
-                , style "height" (sideSize amount)
+                [ style "width" (fmtSideSize amount)
+                , style "height" (fmtSideSize amount)
                 , class "donation"
                 , List.getAt i colors
                     |> Maybe.withDefault Tw.bg_blue_200
@@ -244,8 +245,37 @@ drawCause width donations =
                 , css [ Tw.flex, Tw.justify_center, Tw.items_center, Tw.flex_nowrap ]
                 ]
                 [ text ("$" ++ String.fromFloat amount) ]
+
+        matchBox =
+            div
+                [ css [ Tw.bg_green_100, Tw.border_l, Tw.border_r, Tw.border_black, Tw.flex, Tw.justify_center ]
+                , style "height" "100px"
+                ]
+                [ text "Match" ]
+
+        nameBox =
+            div
+                [ css
+                    [ Tw.flex
+                    , Tw.items_center
+                    , Tw.justify_center
+                    ]
+                ]
+                [ text name ]
     in
     List.indexedMap drawDonation donations
+        |> div
+            [ css
+                [ Tw.flex
+                , Tw.border_l
+                , Tw.border_r
+                , Tw.border_t_4
+                , Tw.border_black
+                ]
+            , class "cause"
+            ]
+        |> (\squares -> [ matchBox, squares, nameBox ])
+        |> div [ css [ Tw.flex, Tw.flex_col ] ]
 
 
 colors =
