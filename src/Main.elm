@@ -134,7 +134,7 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ drawRound model.stageWidth exampleDonors 500 ]
+        [ drawRound model.stageWidth exampleDonors 100 ]
 
 
 type alias Donor =
@@ -153,7 +153,7 @@ exampleDonors =
                 , ( "MuseScore Open Source Project", 10 )
                 , ( "Solar Coffee Research", 100 )
                 ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "Assumed", 1 ) ]
       }
     , { name = "Rachael"
       , donationsByCause =
@@ -163,7 +163,7 @@ exampleDonors =
                 , ( "MuseScore Open Source Project", 1 )
                 , ( "Solar Coffee Research", 10 )
                 ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "Assumed", 1 ) ]
       }
     , { name = "Sarah"
       , donationsByCause =
@@ -172,15 +172,22 @@ exampleDonors =
                 , ( "Piano podcast", 4 )
                 , ( "Solar Coffee Research", 10 )
                 ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "Assumed", 1 ) ]
       }
     ]
+
+
+type alias Donation =
+    { bonusRatio : Float
+    , color : Css.Style
+    , amount : Float
+    }
 
 
 drawRound widthOfRound donors totalMatch =
     let
         pixelsPerRootDollar =
-            widthOfRound / rootSumAllDonations
+            widthOfRound / weightedRootSumAllDonations
 
         allCauses =
             donors
@@ -189,24 +196,38 @@ drawRound widthOfRound donors totalMatch =
                 |> Set.fromList
                 |> Set.toList
 
-        rootSumOfDonations causeName =
+        weightedRootSumOfDonations causeName =
+            {- Weights b/c passport bonus scores
+               root b/c quadratic
+               sum b/c matching
+            -}
             donors
                 |> List.filterMap
                     (\donor ->
                         Dict.get causeName donor.donationsByCause
+                            |> Maybe.map sqrt
+                            |> Maybe.map2 (*) (donorBonus donor)
                     )
-                |> List.map sqrt
                 |> List.sum
 
         donations causeName =
             donors
-                |> List.filterMap
-                    (\donor ->
+                |> List.indexedMap
+                    (\i donor ->
                         Dict.get causeName donor.donationsByCause
+                            |> Maybe.map3 Donation (donorBonus donor) (List.getAt i colors)
                     )
+                |> List.filterMap identity
 
-        rootSumAllDonations =
-            List.map rootSumOfDonations allCauses
+        donorBonus donor =
+            donor.bonusByPassportSource
+                |> Dict.toList
+                |> List.map Tuple.second
+                |> List.sum
+                |> Just
+
+        weightedRootSumAllDonations =
+            List.map weightedRootSumOfDonations allCauses
                 |> List.sum
     in
     allCauses
@@ -215,7 +236,7 @@ drawRound widthOfRound donors totalMatch =
                 drawCause
                     { name = cause
                     , pixelsPerRootDollar = pixelsPerRootDollar
-                    , causeMatch = rootSumOfDonations cause / rootSumAllDonations * totalMatch
+                    , causeMatch = weightedRootSumOfDonations cause / weightedRootSumAllDonations * totalMatch
                     , donations = donations cause
                     }
             )
@@ -226,7 +247,7 @@ type alias CauseArguments =
     { name : String
     , causeMatch : Float
     , pixelsPerRootDollar : Float
-    , donations : List Float
+    , donations : List Donation
     }
 
 
@@ -234,18 +255,20 @@ drawCause : CauseArguments -> Html Msg
 drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
     let
         {- Views -}
-        drawDonation i amount =
+        drawDonation i donation =
             div
-                [ style "width" (fmtSideSize amount)
-                , style "height" (fmtSideSize amount)
+                [ style "width" (fmtWidthSize donation)
+                , style "height" (fmtHeightSize donation)
                 , class "donation"
-                , List.getAt i colors
-                    |> Maybe.withDefault Tw.bg_blue_200
-                    |> List.singleton
-                    |> css
-                , css [ Tw.flex, Tw.justify_center, Tw.items_center, Tw.flex_nowrap ]
+                , css
+                    [ Tw.flex
+                    , Tw.justify_center
+                    , Tw.items_center
+                    , Tw.flex_nowrap
+                    , donation.color
+                    ]
                 ]
-                [ text ("$" ++ String.fromFloat amount) ]
+                [ text ("$" ++ String.fromFloat donation.amount) ]
 
         matchBox =
             div
@@ -266,19 +289,37 @@ drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
 
         totalBox =
             div [ css [ Tw.flex, Tw.items_center, Tw.justify_center ] ]
-                [ text ("Total: $" ++ String.fromInt (round (List.sum donations + causeMatch))) ]
+                [ text ("Total: $" ++ String.fromInt totalFunding) ]
 
-        fmtSideSize amount =
-            sideSizeInPixels amount
+        fmtWidthSize donation =
+            widthSizeInPixels donation
+                |> String.fromFloat
+                |> (\x -> x ++ "px")
+
+        fmtHeightSize donation =
+            heightSizeInPixels donation
                 |> String.fromFloat
                 |> (\x -> x ++ "px")
 
         {- Math -}
-        sideSizeInPixels amount =
-            sqrt amount * pixelsPerRootDollar
+        widthSizeInPixels { bonusRatio, amount } =
+            sqrt amount * bonusRatio * pixelsPerRootDollar
+
+        heightSizeInPixels { bonusRatio, amount } =
+            sqrt amount / bonusRatio * pixelsPerRootDollar
 
         matchHeight =
-            causeMatch / (List.map sqrt donations |> List.sum) * pixelsPerRootDollar
+            causeMatch / donationTotal * pixelsPerRootDollar
+
+        donationTotal =
+            List.map2 Tuple.pair
+                (List.map .amount donations)
+                (List.map .bonusRatio donations)
+                |> List.map (\( amount, bonus ) -> sqrt amount * bonus)
+                |> List.sum
+
+        totalFunding =
+            round (List.sum (List.map .amount donations) + causeMatch)
     in
     List.indexedMap drawDonation donations
         |> div
@@ -350,22 +391,22 @@ writing =
 hamiltonDonors =
     [ { name = "d6"
       , donationsByCause = Dict.fromList [ ( "Opera", 4 ) ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
       }
     , { name = "d5"
       , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
       }
     , { name = "d4"
       , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
       }
     , { name = "d3"
       , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
       }
     , { name = "d1"
       , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
-      , bonusByPassportSource = Dict.fromList []
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
       }
     ]
