@@ -22,6 +22,7 @@ type alias Model =
     { width : Float
     , height : Float
     , stageWidth : Float
+    , donors : List Donor
     }
 
 
@@ -30,6 +31,7 @@ init =
     ( { height = 0
       , width = 0
       , stageWidth = 0
+      , donors = quadExample1Donors
       }
     , Task.attempt GotViewport Dom.getViewport
     )
@@ -114,6 +116,10 @@ spacer =
     div [ style "height" "20em" ] []
 
 
+halfSpacer =
+    div [ style "height" "7em" ] []
+
+
 main : Program () Model Msg
 main =
     Browser.element
@@ -134,14 +140,14 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ drawRound model.stageWidth exampleDonors 100
-        , drawDonors exampleDonors
+        [ drawRound model.stageWidth model.donors 10
+        , drawDonors model.donors
         ]
 
 
 type alias Donor =
     { name : String
-    , donationsByCause : Dict String Int
+    , donationsByCause : Dict String Float
     , bonusByPassportSource : Dict String Float
     }
 
@@ -273,11 +279,15 @@ drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
                 [ text ("$" ++ String.fromFloat donation.amount) ]
 
         matchBox =
-            div
-                [ css [ Tw.bg_green_200, Tw.border_l, Tw.border_r, Tw.border_black, Tw.flex, Tw.justify_center ]
-                , style "height" (String.fromFloat matchHeight ++ "px")
-                ]
-                [ text ("Match: $" ++ String.fromInt (round causeMatch)) ]
+            if causeMatch > 0 then
+                div
+                    [ css [ Tw.bg_green_200, Tw.border_l, Tw.border_r, Tw.border_black, Tw.flex, Tw.justify_center ]
+                    , style "height" (String.fromFloat matchHeight ++ "px")
+                    ]
+                    [ text ("Match: $" ++ String.fromInt (round causeMatch)) ]
+
+            else
+                text ""
 
         nameBox =
             div
@@ -330,6 +340,9 @@ drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
 
         totalFunding =
             round (List.sum (List.map .amount donations) + causeMatch)
+
+        maxHeight =
+            400
     in
     List.indexedMap drawDonation donations
         |> div
@@ -361,6 +374,19 @@ colors =
     , "rgb(228,135,57)"
     , "rgb(154,142,145)"
     ]
+        ++ [ "rgb(197,213,240)"
+           , "rgb(65,201,220)"
+           , "rgb(208,168,249)"
+           , "rgb(254,183,134)"
+           , "rgb(148,166,253)"
+           , "rgb(250,65,199)"
+           , "rgb(226,209,203)"
+           , "rgb(253,89,37)"
+           , "rgb(251,159,168)"
+           , "rgb(250,85,122)"
+           , "rgb(228,135,57)"
+           , "rgb(154,142,145)"
+           ]
 
 
 jar amount =
@@ -405,7 +431,7 @@ drawDonors donors =
     in
     div [ css [ Tw.prose ] ]
         [ h2 [] [ text "Donors" ]
-        , div [ css [ Tw.flex ] ]
+        , div [ css [ Tw.flex, Tw.flex_wrap ] ]
             (List.indexedMap drawDonor donors)
         ]
 
@@ -415,6 +441,55 @@ drawDonors donors =
 
 
 writing =
+    div []
+        [ h1 [] [ text "A Visual Guide to Funding Mechanisms" ]
+        , halfSpacer
+        , h2 [] [ text "How Anti-Sybil Quadratic Funding saved a small town from having to watch Hamlet *again*" ]
+        , p []
+            [ text "Daniel works for small town's City Council deciding how to spend their art budget. Every year this town has a theater festival in the park, and it's Daniel's job to keep everyone happy." ]
+        , p [] [ text "For years, the budget went to free food for people who watched the shows. A wealthy donor in the community was happy to fund the actors and costumes and musicians as long as they put on his favorite play - Shakespeare's Hamlet. Other shows happened too, but they rarely could pay their actors or afford costumes." ]
+
+        --, drawRound 500 hamletDonors 0
+        , halfSpacer
+        , pre [] [ text "⚠️Unmatched funding visualization unfinished⚠️" ]
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , halfSpacer
+
+        -- Why not vote for which shows get funds?
+        -- , p [] [ text "Daniel began to hear complaints about the festival, and so he began looking for improvements. His first idea was to have people vote on which shows would get funding. " ]
+        , p [] [ text "Daniel began to hear complaints about the festival, and so he began looking for improvements. Inspired by websites like kickstarter and indiegogo, he made a website for his town where people could donate to upcoming shows. This helped a bit - some people gave money now that it was easier to hear about the shows in one place and donate. But most of the shows still didn't have much funding. People were so sick of Hamlet that they weren't even showing up for the free food anymore." ]
+        , halfSpacer
+        , pre [] [ text "⚠️Unmatched funding visualization unfinished⚠️" ]
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , halfSpacer
+        , p [] [ text "The next year, Daniel decided some of the city's funds would match those of donors on the website. This generated a lot of interest! Many new projects were added to the website, and some seemed like they would have enough funding to hire good musicians." ]
+        , p [] [ text "When the results came in though, it turned out the wealthy donor had taken most of the funds since his donation to Hamlet outweighed all other donations. Many townsfolk were angry, and they told Daniel to not give any funds to the Hamlet productio. He looked into this, but it would have broken city laws about showing no preference between opinions of different citizens." ]
+
+        -- Why not cap linear donations?
+        , halfSpacer
+        , pre [] [ text "⚠️Linear matched funding visualization unfinished⚠️" ]
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , halfSpacer
+        , p [] [ text "The next year, Daniel researched credibly neutral ways to blend democratic structures and free markets. He read about Quadratic Funding, where every donation is matched, but not directly. If one person donated 4 dollars, it would get matched half as much as 4 people donating 1 dollar." ]
+        , halfSpacer
+        , drawRound 400 quadExample1Donors 10
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , p [] [ text "He had to draw pictures to explain this to people, but they got the idea pretty quickly and were happy with the results." ]
+        , halfSpacer
+        , p [] [ text "The next year, Daniel noticed a problem. There were more people donating than lived in his city, and the projects they donated to were from out of town. Some out-of-town projects were getting the lion's share of the matched funding, with many more participants than other projects. Daniel looked closely at the donors and found they all had very similar emails - catsFan1@gmail.com, catsFan2@gmail.com, catsFan3@gmail.com... There were hundreds of accounts just like this." ]
+        , halfSpacer
+        , drawRound 400 quadExample2Donors 100
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , p [] [ text "Daniel made rules that kept out email addresses that were too similar, but he found the 'catsFan' character could always come up with more emails. He tried to require a Social Security number to use the website, but got push back from users who said that was too invasive." ]
+        , halfSpacer
+        , p [] [ text "Through more research, Daniel heard of the Gitcoin Passport project, which would prevent this kind of abuse. Donors like 'catsFan' would still be able to donate, but if they wanted access to the matching funds, they would have to link their account to others which increased the likelihood they were just one person." ]
+        , drawRound 400 quadExample3Donors 50
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , p [] [ text "By adding options for social media accounts which have expensive teams to prevent multiple accounts, most people could still use the platform. 'CatsFan' was limited to their one account, however. And they were even able to give a bonus to users who were verified residents of the city, rather than outsiders." ]
+        ]
+
+
+writing2 =
     div []
         [ spacer
         , h3 [] [ text "Piano Man donations (just giving)" ]
@@ -460,5 +535,173 @@ hamiltonDonors =
     , { name = "d1"
       , donationsByCause = Dict.fromList [ ( "Basic Music Education", 1 ) ]
       , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    ]
+
+
+hamletDonors =
+    [ { name = "d6"
+      , donationsByCause = Dict.fromList [ ( "Hamlet", 1000 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d3"
+      , donationsByCause = Dict.fromList [ ( "School of Rock", 50 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d1"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 75 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    ]
+
+
+quadExample1Donors =
+    [ { name = "d6"
+      , donationsByCause = Dict.fromList [ ( "Hamlet", 4 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d5"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d4"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d3"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d1"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    ]
+
+
+quadExample2Donors =
+    [ { name = "16"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "26"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "36"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "46"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "5a"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "5b"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "5c"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "5d"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "5e"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "5f"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d6"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d5"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d4"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d3"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    , { name = "d1"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 1 ) ]
+      }
+    ]
+
+
+quadExample3Donors =
+    [ { name = "catsFan1@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsFan2@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsFan3@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan5@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan6@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan7@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan8@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan9@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan10@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan11@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "catsfan12@gmail.com"
+      , donationsByCause = Dict.fromList [ ( "Cats", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "citizen1"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
+      }
+    , { name = "citizen2"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ), ( "person", 0.9 ) ]
+      }
+    , { name = "citizen4"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ), ( "person", 0.9 ), ( "citizen", 0.15 ) ]
+      }
+    , { name = "citizen3"
+      , donationsByCause = Dict.fromList [ ( "Hamilton", 1 ) ]
+      , bonusByPassportSource = Dict.fromList [ ( "assumed", 0.5 ) ]
       }
     ]
