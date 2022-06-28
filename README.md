@@ -7,11 +7,14 @@ See hosted version [here](https://62b90550d2fa15311137d1af--relaxed-macaron-8a05
 
 
 # Roadmap
-[ ] Show donors by color
+[x] Show donors by color
 [x] Show match pool amounts
 
 [ ] Explain why 5 * 1 > 1 * 5
 [ ] Explain why this helps with shakespeare
 [ ] Explain why this helps with voluntary taxation
+[ ] Explain why this helps with funding the long tail
+[ ] Compare this with linear funding + match cap
 
 [ ] Animate concepts
+[ ] Show linear matching 
