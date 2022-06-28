@@ -23,6 +23,7 @@ type alias Model =
     , height : Float
     , stageWidth : Float
     , donors : List Donor
+    , match : Float
     }
 
 
@@ -32,6 +33,7 @@ init =
       , width = 0
       , stageWidth = 0
       , donors = quadExample1Donors
+      , match = 10
       }
     , Task.attempt GotViewport Dom.getViewport
     )
@@ -41,6 +43,7 @@ type Msg
     = GotResize Int Int
     | GotViewport (Result Dom.Error Dom.Viewport)
     | GotStageSize (Result Dom.Error Dom.Viewport)
+    | NewViz (List Donor) Float
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -71,6 +74,9 @@ update msg model =
 
                 Err _ ->
                     ( model, Cmd.none )
+
+        NewViz donors match ->
+            ( { model | donors = donors, match = match }, Cmd.none )
 
 
 tailwindViewWrapper : Model -> Html.Html Msg
@@ -140,7 +146,7 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ drawRound model.stageWidth model.donors 10
+        [ drawRound model.stageWidth model.donors model.match
         , drawDonors model.donors
         ]
 
@@ -473,18 +479,18 @@ writing =
         , p [] [ text "The next year, Daniel researched credibly neutral ways to blend democratic structures and free markets. He read about Quadratic Funding, where every donation is matched, but not directly. If one person donated 4 dollars, it would get matched half as much as 4 people donating 1 dollar." ]
         , halfSpacer
         , drawRound 400 quadExample1Donors 10
-        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ], onClick (NewViz quadExample1Donors 10) ] [ text "<- Replace interactive viz " ]
         , p [] [ text "He had to draw pictures to explain this to people, but they got the idea pretty quickly and were happy with the results." ]
         , halfSpacer
         , p [] [ text "The next year, Daniel noticed a problem. There were more people donating than lived in his city, and the projects they donated to were from out of town. Some out-of-town projects were getting the lion's share of the matched funding, with many more participants than other projects. Daniel looked closely at the donors and found they all had very similar emails - catsFan1@gmail.com, catsFan2@gmail.com, catsFan3@gmail.com... There were hundreds of accounts just like this." ]
         , halfSpacer
         , drawRound 400 quadExample2Donors 100
-        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ], onClick (NewViz quadExample2Donors 100) ] [ text "<- Replace interactive viz " ]
         , p [] [ text "Daniel made rules that kept out email addresses that were too similar, but he found the 'catsFan' character could always come up with more emails. He tried to require a Social Security number to use the website, but got push back from users who said that was too invasive." ]
         , halfSpacer
         , p [] [ text "Through more research, Daniel heard of the Gitcoin Passport project, which would prevent this kind of abuse. Donors like 'catsFan' would still be able to donate, but if they wanted access to the matching funds, they would have to link their account to others which increased the likelihood they were just one person." ]
         , drawRound 400 quadExample3Donors 50
-        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ] ] [ text "<- Replace interactive viz " ]
+        , button [ css [ Tw.border, Tw.p_1, Tw.rounded, Tw.bg_gray_50 ], onClick (NewViz quadExample3Donors 5) ] [ text "<- Replace interactive viz " ]
         , p [] [ text "By adding options for social media accounts which have expensive teams to prevent multiple accounts, most people could still use the platform. 'CatsFan' was limited to their one account, however. And they were even able to give a bonus to users who were verified residents of the city, rather than outsiders." ]
         ]
 
