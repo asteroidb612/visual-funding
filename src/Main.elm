@@ -134,7 +134,7 @@ stage model =
         , style "top" "50%"
         , style "transform" "translateY(-50%)"
         ]
-        [ drawDonations model.stageWidth exampleDonors ]
+        [ drawRound model.stageWidth exampleDonors 500 ]
 
 
 type alias Donor =
@@ -177,8 +177,11 @@ exampleDonors =
     ]
 
 
-drawDonations width donors =
+drawRound widthOfRound donors totalMatch =
     let
+        pixelsPerRootDollar =
+            widthOfRound / rootSumAllDonations
+
         allCauses =
             donors
                 |> List.map .donationsByCause
@@ -186,7 +189,7 @@ drawDonations width donors =
                 |> Set.fromList
                 |> Set.toList
 
-        widthOfCause causeName =
+        rootSumOfDonations causeName =
             donors
                 |> List.filterMap
                     (\donor ->
@@ -202,36 +205,35 @@ drawDonations width donors =
                         Dict.get causeName donor.donationsByCause
                     )
 
-        totalWidth =
-            List.map widthOfCause allCauses
+        rootSumAllDonations =
+            List.map rootSumOfDonations allCauses
                 |> List.sum
     in
     allCauses
         |> List.map
             (\cause ->
                 drawCause
-                    cause
-                    (widthOfCause cause / totalWidth * width)
-                    (donations cause)
+                    { name = cause
+                    , pixelsPerRootDollar = pixelsPerRootDollar
+                    , causeMatch = rootSumOfDonations cause / rootSumAllDonations * totalMatch
+                    , donations = donations cause
+                    }
             )
         |> div [ css [ Tw.flex ], class "allCauses" ]
 
 
-drawCause name width donations =
+type alias CauseArguments =
+    { name : String
+    , causeMatch : Float
+    , pixelsPerRootDollar : Float
+    , donations : List Float
+    }
+
+
+drawCause : CauseArguments -> Html Msg
+drawCause { name, pixelsPerRootDollar, donations, causeMatch } =
     let
-        donationTotal =
-            donations
-                |> List.map sqrt
-                |> List.sum
-
-        sideSize amount =
-            sqrt amount / donationTotal * width
-
-        fmtSideSize amount =
-            sideSize amount
-                |> String.fromFloat
-                |> (\x -> x ++ "px")
-
+        {- Views -}
         drawDonation i amount =
             div
                 [ style "width" (fmtSideSize amount)
@@ -248,9 +250,9 @@ drawCause name width donations =
         matchBox =
             div
                 [ css [ Tw.bg_green_100, Tw.border_l, Tw.border_r, Tw.border_black, Tw.flex, Tw.justify_center ]
-                , style "height" "100px"
+                , style "height" (String.fromFloat matchHeight ++ "px")
                 ]
-                [ text "Match" ]
+                [ text ("Match: $" ++ String.fromInt (round causeMatch)) ]
 
         nameBox =
             div
@@ -261,6 +263,22 @@ drawCause name width donations =
                     ]
                 ]
                 [ text name ]
+
+        totalBox =
+            div [ css [ Tw.flex, Tw.items_center, Tw.justify_center ] ]
+                [ text ("Total: $" ++ String.fromInt (round (List.sum donations + causeMatch))) ]
+
+        fmtSideSize amount =
+            sideSizeInPixels amount
+                |> String.fromFloat
+                |> (\x -> x ++ "px")
+
+        {- Math -}
+        sideSizeInPixels amount =
+            sqrt amount * pixelsPerRootDollar
+
+        matchHeight =
+            causeMatch / (List.map sqrt donations |> List.sum) * pixelsPerRootDollar
     in
     List.indexedMap drawDonation donations
         |> div
@@ -273,7 +291,7 @@ drawCause name width donations =
                 ]
             , class "cause"
             ]
-        |> (\squares -> [ matchBox, squares, nameBox ])
+        |> (\squares -> [ totalBox, matchBox, squares, nameBox ])
         |> div [ css [ Tw.flex, Tw.flex_col ] ]
 
 
@@ -321,7 +339,7 @@ writing =
         , spacer
         , h3 [] [ text "Quadratic Funding" ]
         , p [] [ text "Here you're matching donations by their square root proportions. That means four people giving one dollar each to project A get more matching funds than one person giving four dollars to project B. " ]
-        , drawDonations 300 hamiltonDonors
+        , drawRound 300 hamiltonDonors 10
         , p [] [ text "However, this is vulnerable to people making multiple accounts and pretending to be 4 people!" ]
         , spacer
         , h3 [] [ text "Passported Quadratic Funding" ]
