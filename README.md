@@ -5,7 +5,8 @@ To make these topics accessible, they are articulated visually and narratively.
 
 See hosted version [here](https://relaxed-macaron-8a0563.netlify.app/).
 
-<img width="1111" alt="Screen Shot 2022-06-28 at 6 04 46 PM" src="https://user-images.githubusercontent.com/1222638/176324276-8b309012-e914-4cea-9876-c120c367452a.png">
+
+![2022-06-28 18 07 32](https://user-images.githubusercontent.com/1222638/176324494-60074330-543c-4102-afad-22c70e861d8c.gif)
 
 
 # Roadmap
