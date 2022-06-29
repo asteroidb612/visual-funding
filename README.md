@@ -3,6 +3,8 @@ This guide was written to explain the calculation of personhood and plurality sc
 
 To make these topics accessible, they are articulated visually and narratively. 
 
+This is a draft - More narrative polish and better-math'd examples would improve it. Some visualizations are missing as well, and interactivity could be improved. 
+
 See hosted version [here](https://relaxed-macaron-8a0563.netlify.app/).
 
 
