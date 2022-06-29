@@ -448,7 +448,7 @@ drawDonors donors =
 
 writing =
     div []
-        [ h1 [] [ text "A Visual Guide to Funding Mechanisms" ]
+        [ h1 [] [ text "A Visual / Narrative Guide to Funding Mechanisms" ]
         , halfSpacer
         , h2 [] [ text "How Anti-Sybil Quadratic Funding saved a small town from having to watch Hamlet *again*" ]
         , p []
